@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Gaming UI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="device">
+        <div class="screen">
+            <div class="header">
+                <span class="greeting" id="greeting"></span>
+                <div class="status-icons">
+                    <i class="fas fa-wifi"></i>
+                    <span id="time"></span>
+                    <span id="ping"></span>
+                </div>
+            </div>
+
+            <div class="retro-games" id="retro-games-container">
+                <!-- Retro games will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-overlay" id="game-overlay">
+        <iframe id="game-frame"></iframe>
+        <button class="close-btn" onclick="closeOverlay()">×</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
