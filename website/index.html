@@ -16,6 +16,14 @@
                     <i class="fas fa-wifi"></i>
                     <span id="time"></span>
                     <span id="ping"></span>
+                    <button class="ai-button" id="ai-button">
+                        <div class="ai-icon">
+                            <div class="sparkle sparkle-1"></div>
+                            <div class="sparkle sparkle-2"></div>
+                            <div class="sparkle sparkle-3"></div>
+                            <div class="sparkle sparkle-4"></div>
+                        </div>
+                    </button>
                 </div>
             </div>
 
@@ -28,6 +36,80 @@
     <div class="glass-overlay" id="game-overlay">
         <iframe id="game-frame"></iframe>
         <button class="close-btn" onclick="closeOverlay()">×</button>
+    </div>
+
+    <!-- Settings Button -->
+    <div class="settings-button">
+        <i class="fas fa-cog"></i>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button class="close-settings">&times;</button>
+        </div>
+        <div class="settings-content">
+            <div class="setting-item">
+                <label>Theme Mode</label>
+                <div class="theme-toggle">
+                    <button class="theme-btn active" data-theme="light">Light</button>
+                    <button class="theme-btn" data-theme="dark">Dark</button>
+                </div>
+            </div>
+            <div class="setting-item">
+                <label>FPS Limit</label>
+                <select id="fps-limit">
+                    <option value="30">30 FPS</option>
+                    <option value="60" selected>60 FPS</option>
+                    <option value="120">120 FPS</option>
+                    <option value="unlimited">Unlimited</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label>Sound Effects</label>
+                <label class="switch">
+                    <input type="checkbox" id="sound-effects" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <label>Background Music</label>
+                <label class="switch">
+                    <input type="checkbox" id="background-music" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this after the settings panel -->
+    <div class="ai-panel">
+        <div class="ai-header">
+            <h2>AI Game Creator</h2>
+            <button class="close-ai">&times;</button>
+        </div>
+        <div class="ai-content">
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="ai-input" placeholder="Describe the game you want to create...">
+                    <button id="send-ai-request">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="api-key-container">
+            <input type="password" id="gemini-key" placeholder="Enter your Gemini API key">
+            <button id="save-api-key">Save Key</button>
+        </div>
+    </div>
+
+    <!-- Add this for the loading overlay -->
+    <div class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p>Creating your game...</p>
     </div>
 
     <script src="script.js"></script>
