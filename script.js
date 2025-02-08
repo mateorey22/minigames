@@ -219,145 +219,86 @@ Return only the title text without any quotes, brackets, or formatting.`;
             gameTitle = gameTitle.replace(/[^a-zA-Z0-9\s-]/g, '').trim();
             const folderName = gameTitle.toLowerCase().replace(/\s+/g, '-');
 
-            // Create a zip file containing all game files
-            const zip = new JSZip();
-            const gameFolder = zip.folder(folderName);
+            // Load RGBDS WebAssembly
+            updateLoadingMessage('Loading compiler...');
             
-            // Add assembly source files with proper formatting
-            gameFolder.file('main.asm', sections.MAIN.trim());
-            gameFolder.file('header.asm', sections.HEADER.trim());
-            gameFolder.file('graphics.asm', sections.GRAPHICS.trim());
-
-            // Add a constants file for hardware registers
-            const hardwareConstantsContent = `; Hardware registers
-INCLUDE "hardware.inc"
-
-; Game Boy hardware constants
-DEF SCREEN_WIDTH EQU 160
-DEF SCREEN_HEIGHT EQU 144
-DEF VRAM_START EQU $8000
-DEF SCRN0_START EQU $9800
-DEF OAM_START EQU $FE00`;
-
-            gameFolder.file('constants.asm', hardwareConstantsContent);
-
-            // Add hardware.inc file
-            const hardwareIncContent = await fetch('https://raw.githubusercontent.com/gbdev/hardware.inc/master/hardware.inc')
-                .then(response => response.text())
-                .catch(() => `; Fallback minimal hardware.inc
-DEF rLCDC EQU $FF40
-DEF rSTAT EQU $FF41
-DEF rSCY  EQU $FF42
-DEF rSCX  EQU $FF43
-DEF rLY   EQU $FF44
-DEF rLYC  EQU $FF45
-DEF rDMA  EQU $FF46
-DEF rBGP  EQU $FF47
-DEF rOBP0 EQU $FF48
-DEF rOBP1 EQU $FF49
-DEF rWY   EQU $FF4A
-DEF rWX   EQU $FF4B
-DEF rKEY1 EQU $FF4D
-DEF rVBK  EQU $FF4F
-DEF rBOOT EQU $FF50`);
-
-            gameFolder.file('hardware.inc', hardwareIncContent);
-
-            // Update Makefile to include all necessary files
-            const makefileContent = `# Makefile for ${gameTitle}
-RGBASM  := rgbasm
-RGBLINK := rgblink
-RGBFIX  := rgbfix
-
-ROM := ${folderName}.gb
-OBJS := main.o header.o graphics.o
-
-# RGBDS flags
-ASFLAGS := -L -Weverything
-LDFLAGS := -p 0xFF
-FIXFLAGS := -v -p 0xFF -t "${gameTitle}" -r 0x01
-
-.PHONY: all clean
-
-all: $(ROM)
-
-# Assembly source files
-%.o: %.asm
-\t$(RGBASM) $(ASFLAGS) -o $@ $<
-
-# Link object files and fix ROM
-$(ROM): $(OBJS)
-\t$(RGBLINK) $(LDFLAGS) -o $@ $(OBJS)
-\t$(RGBFIX) $(FIXFLAGS) $@
-
-clean:
-\t-rm -f $(ROM) $(OBJS)
-\t-rm -f *.sym *.map
-
-rebuild: clean all`;
-
-            gameFolder.file('Makefile', makefileContent);
-
-            // Update README with more detailed instructions
-            const readmeContent = `# ${gameTitle} - Game Boy Game
-
-## Requirements
-
-- RGBDS v0.5.2 or later (Game Boy development toolchain)
-- Make (build automation tool)
-- Game Boy emulator (BGB, SameBoy, or Emulicious recommended)
-
-## Compilation Instructions
-
-1. Install RGBDS:
-   - Windows: \`choco install rgbds\`
-   - macOS: \`brew install rgbds\`
-   - Linux: \`sudo apt install rgbds\`
-
-2. Open a terminal in this directory
-
-3. Run \`make\` to compile the game
-
-4. The compiled ROM will be '${folderName}.gb'
-
-## Project Structure
-
-- \`main.asm\`: Main game code
-- \`header.asm\`: ROM header and initialization
-- \`graphics.asm\`: Tile and sprite data
-- \`constants.asm\`: Hardware constants and definitions
-- \`hardware.inc\`: Hardware registers definitions
-
-## Testing
-
-Test the ROM using a Game Boy emulator:
-- BGB (Windows): Excellent for debugging
-- SameBoy (macOS/Linux): Highly accurate
-- Emulicious: Great for development
-
-## Resources
-
-- GB ASM Tutorial: https://gbdev.io/gb-asm-tutorial/
-- Pan Docs: https://gbdev.io/pandocs/
-- RGBDS Documentation: https://rgbds.gbdev.io/docs/`;
-
-            gameFolder.file('README.md', readmeContent);
-
-            // Generate and download zip file
-            const zipBlob = await zip.generateAsync({type: 'blob'});
-            const downloadUrl = URL.createObjectURL(zipBlob);
+            const rgbdsWasm = await loadRGBDS();
             
-            const downloadLink = document.createElement('a');
-            downloadLink.href = downloadUrl;
-            downloadLink.download = `${folderName}.zip`;
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            URL.revokeObjectURL(downloadUrl);
+            updateLoadingMessage('Compiling game...');
+            
+            try {
+                // Create virtual filesystem for RGBDS
+                const fs = new rgbdsWasm.FS();
+                
+                // Write source files to virtual filesystem
+                fs.writeFile('main.asm', sections.MAIN);
+                fs.writeFile('header.asm', sections.HEADER);
+                fs.writeFile('graphics.asm', sections.GRAPHICS);
+                fs.writeFile('hardware.inc', hardwareIncContent);
+                fs.writeFile('constants.asm', hardwareConstantsContent);
 
-            showCustomAlert('Game files created and downloaded successfully!');
-            aiInput.value = '';
+                // Compile assembly files
+                await rgbdsWasm.rgbasm('main.asm', 'main.o');
+                await rgbdsWasm.rgbasm('header.asm', 'header.o');
+                await rgbdsWasm.rgbasm('graphics.asm', 'graphics.o');
+
+                // Link object files
+                await rgbdsWasm.rgblink(['main.o', 'header.o', 'graphics.o'], `${folderName}.gb`);
+
+                // Fix ROM header
+                await rgbdsWasm.rgbfix(`${folderName}.gb`, {
+                    title: gameTitle,
+                    gameId: '01',
+                    newLicensee: '01',
+                    sgbFlag: 0x00,
+                    cartridgeType: 0x00,
+                    romSize: 0x00,
+                    ramSize: 0x00,
+                    destinationCode: 0x01,
+                    oldLicensee: 0x33,
+                    maskRomVersion: 0x00
+                });
+
+                // Read compiled ROM
+                const romData = fs.readFile(`${folderName}.gb`);
+                
+                // Create zip file with ROM and source
+                const zip = new JSZip();
+                const gameFolder = zip.folder(folderName);
+                
+                // Add ROM file
+                gameFolder.file(`${folderName}.gb`, romData);
+                
+                // Add source files
+                gameFolder.file('main.asm', sections.MAIN.trim());
+                gameFolder.file('header.asm', sections.HEADER.trim());
+                gameFolder.file('graphics.asm', sections.GRAPHICS.trim());
+                gameFolder.file('constants.asm', hardwareConstantsContent);
+                gameFolder.file('hardware.inc', hardwareIncContent);
+                
+                // Add README
+                gameFolder.file('README.md', readmeContent);
+
+                // Generate and download zip file
+                const zipBlob = await zip.generateAsync({type: 'blob'});
+                const downloadUrl = URL.createObjectURL(zipBlob);
+                
+                const downloadLink = document.createElement('a');
+                downloadLink.href = downloadUrl;
+                downloadLink.download = `${folderName}.zip`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(downloadUrl);
+
+                showCustomAlert('Game compiled and downloaded successfully!');
+                aiInput.value = '';
                 aiPanel.classList.remove('active');
+
+            } catch (error) {
+                console.error('Compilation error:', error);
+                throw new Error(`Failed to compile game: ${error.message}`);
+            }
 
         } catch (error) {
             console.error('Error:', error);
@@ -614,5 +555,30 @@ Test the ROM using a Game Boy emulator:
     </script>
 </body>
 </html>`;
+    }
+
+    // Add RGBDS WebAssembly loader
+    async function loadRGBDS() {
+        const wasmUrl = 'https://cdn.jsdelivr.net/npm/rgbds-live@latest/dist/rgbds.wasm';
+        const jsUrl = 'https://cdn.jsdelivr.net/npm/rgbds-live@latest/dist/rgbds.js';
+
+        // Load RGBDS JavaScript
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = jsUrl;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+
+        // Initialize RGBDS WebAssembly
+        return await window.RGBDS.init({
+            locateFile: (path) => {
+                if (path.endsWith('.wasm')) {
+                    return wasmUrl;
+                }
+                return path;
+            }
+        });
     }
 });
