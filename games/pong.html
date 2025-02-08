@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pong</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #game {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #ball {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            top: 195px;
+            left: 395px;
+        }
+
+        .paddle {
+            position: absolute;
+            width: 10px;
+            height: 60px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        #player {
+            left: 20px;
+            top: 170px;
+        }
+
+        #computer {
+            right: 20px;
+            top: 170px;
+        }
+
+        .score {
+            position: absolute;
+            top: 20px;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        #playerScore {
+            left: 30%;
+        }
+
+        #computerScore {
+            right: 30%;
+        }
+
+        .center-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div id="game">
+        <div class="center-line"></div>
+        <div id="ball"></div>
+        <div id="player" class="paddle"></div>
+        <div id="computer" class="paddle"></div>
+        <div id="playerScore" class="score">0</div>
+        <div id="computerScore" class="score">0</div>
+    </div>
+
+    <script>
+        class Pong {
+            constructor() {
+                this.ball = document.getElementById('ball');
+                this.player = document.getElementById('player');
+                this.computer = document.getElementById('computer');
+                this.playerScore = document.getElementById('playerScore');
+                this.computerScore = document.getElementById('computerScore');
+                this.game = document.getElementById('game');
+
+                this.ballX = 395;
+                this.ballY = 195;
+                this.ballSpeedX = 5;
+                this.ballSpeedY = 5;
+                this.playerY = 170;
+                this.computerY = 170;
+                this.playerScore_val = 0;
+                this.computerScore_val = 0;
+
+                this.init();
+            }
+
+            init() {
+                document.addEventListener('mousemove', (e) => {
+                    const rect = this.game.getBoundingClientRect();
+                    const mouseY = e.clientY - rect.top - this.player.offsetHeight/2;
+                    this.playerY = Math.max(0, Math.min(340, mouseY));
+                    this.player.style.top = this.playerY + 'px';
+                });
+
+                this.gameLoop();
+            }
+
+            resetBall() {
+                this.ballX = 395;
+                this.ballY = 195;
+                this.ballSpeedX = 5 * (Math.random() > 0.5 ? 1 : -1);
+                this.ballSpeedY = 5 * (Math.random() > 0.5 ? 1 : -1);
+            }
+
+            updateGame() {
+                // Move ball
+                this.ballX += this.ballSpeedX;
+                this.ballY += this.ballSpeedY;
+
+                // Ball collision with top and bottom
+                if (this.ballY <= 0 || this.ballY >= 390) {
+                    this.ballSpeedY = -this.ballSpeedY;
+                }
+
+                // Ball collision with paddles
+                if (this.ballX <= 30 && this.ballY >= this.playerY && this.ballY <= this.playerY + 60) {
+                    this.ballSpeedX = -this.ballSpeedX;
+                    this.ballSpeedX *= 1.1; // Increase speed
+                }
+
+                if (this.ballX >= 760 && this.ballY >= this.computerY && this.ballY <= this.computerY + 60) {
+                    this.ballSpeedX = -this.ballSpeedX;
+                    this.ballSpeedX *= 1.1; // Increase speed
+                }
+
+                // Scoring
+                if (this.ballX <= 0) {
+                    this.computerScore_val++;
+                    this.computerScore.textContent = this.computerScore_val;
+                    this.resetBall();
+                }
+                if (this.ballX >= 790) {
+                    this.playerScore_val++;
+                    this.playerScore.textContent = this.playerScore_val;
+                    this.resetBall();
+                }
+
+                // Move computer paddle
+                const computerCenter = this.computerY + 30;
+                if (computerCenter < this.ballY - 35) {
+                    this.computerY += 4;
+                } else if (computerCenter > this.ballY + 35) {
+                    this.computerY -= 4;
+                }
+                this.computer.style.top = this.computerY + 'px';
+
+                // Update ball position
+                this.ball.style.left = this.ballX + 'px';
+                this.ball.style.top = this.ballY + 'px';
+            }
+
+            gameLoop() {
+                this.updateGame();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+
+        // Start game when page loads
+        window.addEventListener('load', () => {
+            new Pong();
+        });
+    </script>
+</body>
+</html> 

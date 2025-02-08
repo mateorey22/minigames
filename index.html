@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Game Creator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="dark">
+    <div class="screen">
+        <header class="header">
+            <div class="greeting-container">
+                <h1 id="greeting">Good evening!</h1>
+                <div class="status-icons">
+                    <span id="time">21:00</span>
+                    <i class="fas fa-wifi"></i>
+                    <span id="ping">Ping: 28ms</span>
+                </div>
+            </div>
+            <div class="header-controls">
+                <button id="ai-button" class="ai-button" title="Create new game">
+                    <div class="cursor-logo">
+                        <div class="square"></div>
+                        <div class="square"></div>
+                        <div class="square"></div>
+                        <div class="square"></div>
+                    </div>
+                </button>
+            </div>
+        </header>
+
+        <div id="retro-games-container" class="retro-games"></div>
+
+        <div class="ai-panel">
+            <div class="ai-header">
+                <h2>Create Your Game</h2>
+                <button class="close-ai">&times;</button>
+            </div>
+            <div class="ai-content">
+                <div class="chat-container">
+                    <div class="chat-messages"></div>
+                    <div class="chat-input-container">
+                        <input type="text" id="ai-input" placeholder="Describe your game idea...">
+                        <button id="send-ai-request">Create</button>
+                    </div>
+                </div>
+            </div>
+            <div class="api-key-container">
+                <input type="text" id="gemini-key" placeholder="Enter your Gemini API key">
+                <button id="save-api-key">Save Key</button>
+            </div>
+        </div>
+
+        <button class="settings-button">
+            <i class="fas fa-cog"></i>
+        </button>
+
+        <div class="settings-panel">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="close-settings">&times;</button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label>Theme</label>
+                    <div class="theme-toggle">
+                        <button class="theme-btn" data-theme="light">Light</button>
+                        <button class="theme-btn" data-theme="dark">Dark</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <label>AI Model</label>
+                    <select id="ai-model" class="model-select">
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="gemini-2.0-flash-lite-preview-02-05">Gemini 2.0 Flash-Lite</option>
+                        <option value="gemini-2.0-pro-exp-02-05">Gemini 2.0 Pro Experimental</option>
+                        <option value="gemini-2.0-flash-thinking-exp-01-21">Gemini 2.0 Flash Thinking</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Creating your game...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
